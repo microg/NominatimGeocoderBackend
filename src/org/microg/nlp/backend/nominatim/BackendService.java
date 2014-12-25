@@ -104,8 +104,7 @@ public class BackendService extends GeocoderBackendService {
     protected List<Address> getFromLocationName(String locationName, int maxResults,
                                                 double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
                                                 double upperRightLongitude, String locale) {
-        return super.getFromLocationName(locationName, maxResults, lowerLeftLatitude,
-                lowerLeftLongitude, upperRightLatitude, upperRightLongitude, locale);
+        return null;
     }
 
     private Address parseResponse(Locale locale, JSONObject result) throws JSONException {
