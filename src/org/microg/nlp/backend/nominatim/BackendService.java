@@ -116,7 +116,7 @@ public class BackendService extends GeocoderBackendService {
         }
         Address address = new Address(locale);
         address.setLatitude(result.getDouble(WIRE_LATITUDE));
-        address.setLatitude(result.getDouble(WIRE_LONGITUDE));
+        address.setLongitude(result.getDouble(WIRE_LONGITUDE));
 
         int line = 0;
         JSONObject a = result.getJSONObject(WIRE_ADDRESS);
