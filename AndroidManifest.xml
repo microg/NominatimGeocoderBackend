@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	android:versionName="1.0.0"
-	android:versionCode="1000"
-	package="org.microg.nlp.backend.nominatim">
+          android:versionName="1.1.0"
+          android:versionCode="1100"
+          package="org.microg.nlp.backend.nominatim">
 
-	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-	<uses-sdk
-		android:minSdkVersion="9"
-		android:targetSdkVersion="19" />
-	<application
-		android:allowBackup="false"
-		android:icon="@drawable/ic_launcher"
-		android:label="@string/app_name">
-		<service
-			android:name=".BackendService"
-			android:label="MapQuest Nominatim Backend">
-			<intent-filter>
-				<action android:name="org.microg.nlp.GEOCODER_BACKEND" />
-			</intent-filter>
-		</service>
-	</application>
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="21"/>
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name">
+        <service
+            android:name=".BackendService"
+            android:label="Nominatim Backend">
+            <intent-filter>
+                <action android:name="org.microg.nlp.GEOCODER_BACKEND"/>
+            </intent-filter>
+        </service>
+    </application>
 </manifest>
