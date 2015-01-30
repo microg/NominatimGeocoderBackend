@@ -4,17 +4,16 @@ NominatimGeocoderBackend
 
 Building
 --------
-Currently does not ship any build system or build system specific files. Use your favourite one.
+Build using gradle. Remember to `git submodule init` before.
 
-Building requires Android SDK with API 18 or higher.
 
 Used libraries
 --------------
--	[UnifiedNlpApi](https://github.com/microg/android_packages_apps_UnifiedNlp)
+-	[UnifiedNlpApi](https://github.com/microg/android_external_UnifiedNlpApi)
 
 License
 -------
-    Copyright 2014 μg Project Team
+    Copyright 2014-2015 μg Project Team
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
