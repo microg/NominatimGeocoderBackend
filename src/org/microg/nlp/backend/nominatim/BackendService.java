@@ -4,6 +4,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.os.Build;
 import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.microg.nlp.api.GeocoderBackendService;
@@ -20,8 +21,10 @@ import java.util.Locale;
 
 public class BackendService extends GeocoderBackendService {
     private static final String TAG = BackendService.class.getName();
+    private static final String SERVICE_URL_MAPQUEST = "http://open.mapquestapi.com/nominatim/v1/";
+    private static final String SERVICE_URL_OSM = " http://nominatim.openstreetmap.org/";
     private static final String REVERSE_GEOCODE_URL =
-            "http://open.mapquestapi.com/nominatim/v1/reverse?format=json&accept-language=%s&lat=%f&lon=%f";
+            "%sreverse?format=json&accept-language=%s&lat=%f&lon=%f";
     private static final String WIRE_LATITUDE = "lat";
     private static final String WIRE_LONGITUDE = "lon";
     private static final String WIRE_ADDRESS = "address";
@@ -38,8 +41,9 @@ public class BackendService extends GeocoderBackendService {
 
     @Override
     protected List<Address> getFromLocation(double latitude, double longitude, int maxResults,
-                                            String locale) {
-        String url = String.format(REVERSE_GEOCODE_URL, locale.split("_")[0], latitude, longitude);
+            String locale) {
+        String url = String.format(Locale.US, REVERSE_GEOCODE_URL, SERVICE_URL_MAPQUEST,
+                locale.split("_")[0], latitude, longitude);
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             setUserAgentOnConnection(connection);
@@ -52,9 +56,7 @@ public class BackendService extends GeocoderBackendService {
                 addresses.add(address);
                 return addresses;
             }
-        } catch (IOException e) {
-            Log.w(TAG, e);
-        } catch (JSONException e) {
+        } catch (IOException | JSONException e) {
             Log.w(TAG, e);
         }
         return null;
@@ -102,8 +104,8 @@ public class BackendService extends GeocoderBackendService {
 
     @Override
     protected List<Address> getFromLocationName(String locationName, int maxResults,
-                                                double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
-                                                double upperRightLongitude, String locale) {
+            double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
+            double upperRightLongitude, String locale) {
         return null;
     }
 
