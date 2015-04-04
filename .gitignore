@@ -3,7 +3,5 @@ gen
 .idea/
 build/
 .gradle/
-gradle/
-gradlew
 user.gradle
 local.properties
