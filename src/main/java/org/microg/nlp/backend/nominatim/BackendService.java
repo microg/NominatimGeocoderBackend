@@ -1,10 +1,12 @@
 package org.microg.nlp.backend.nominatim;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.net.Uri;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -28,11 +30,11 @@ public class BackendService extends GeocoderBackendService {
     private static final String SERVICE_URL_MAPQUEST = "http://open.mapquestapi.com/nominatim/v1/";
     private static final String SERVICE_URL_OSM = " http://nominatim.openstreetmap.org/";
     private static final String REVERSE_GEOCODE_URL =
-            "%sreverse?format=json&accept-language=%s&lat=%f&lon=%f";
+            "%sreverse?format=json&key=%s&accept-language=%s&lat=%f&lon=%f";
     private static final String SEARCH_GEOCODE_URL =
-            "%ssearch?format=json&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d";
+            "%ssearch?format=json&key=%s&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d";
     private static final String SEARCH_GEOCODE_WITH_BOX_URL =
-            "%ssearch?format=json&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d" +
+            "%ssearch?format=json&key=%s&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d" +
                     "&viewbox=%f,%f,%f,%f";
     private static final String WIRE_LATITUDE = "lat";
     private static final String WIRE_LONGITUDE = "lon";
@@ -51,8 +53,12 @@ public class BackendService extends GeocoderBackendService {
     @Override
     protected List<Address> getFromLocation(double latitude, double longitude, int maxResults,
             String locale) {
+
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        String mapquestApiKey = SP.getString("api_preference", "NA");
+
         String url = String.format(Locale.US, REVERSE_GEOCODE_URL, SERVICE_URL_MAPQUEST,
-                locale.split("_")[0], latitude, longitude);
+                mapquestApiKey, locale.split("_")[0], latitude, longitude);
         try {
             JSONObject result = new JSONObject(new AsyncGetRequest(this,
                     url).asyncStart().retrieveString());
@@ -84,15 +90,19 @@ public class BackendService extends GeocoderBackendService {
     protected List<Address> getFromLocationName(String locationName, int maxResults,
             double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
             double upperRightLongitude, String locale) {
+
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        String mapquestApiKey = SP.getString("api_preference", "NA");
+
         String query = Uri.encode(locationName);
         String url;
         if (lowerLeftLatitude == 0 && lowerLeftLongitude == 0 && upperRightLatitude == 0 &&
                 upperRightLongitude == 0) {
             url = String.format(Locale.US, SEARCH_GEOCODE_URL, SERVICE_URL_MAPQUEST,
-                    locale.split("_")[0], query, maxResults);
+                    mapquestApiKey, locale.split("_")[0], query, maxResults);
         } else {
             url = String.format(Locale.US, SEARCH_GEOCODE_WITH_BOX_URL, SERVICE_URL_MAPQUEST,
-                    locale.split("_")[0], query, maxResults, lowerLeftLongitude,
+                    mapquestApiKey, locale.split("_")[0], query, maxResults, lowerLeftLongitude,
                     upperRightLatitude, upperRightLongitude, lowerLeftLatitude);
         }
         try {
