@@ -54,6 +54,10 @@ dependencies:
     - ls -al build/outputs/apk/ ; exit 0
     - find . -name '*.apk' ; exit 0
 
+# --- copy apk file to generic location ---
+    - cp -av ./build/outputs/apk/NominatimGeocoderBackend-debug-unaligned.apk app/build/outputs/apk/app-debug-unaligned.apk
+# --- copy apk file to generic location ---
+
     - zip -d app/build/outputs/apk/app-debug-unaligned.apk META-INF/\*     # remove signature !!
     - cp -av app/build/outputs/apk/app-debug-unaligned.apk ~/app.apk ;
       cd ~/ ;
