@@ -55,6 +55,7 @@ dependencies:
     - find . -name '*.apk' ; exit 0
 
 # --- copy apk file to generic location ---
+    - mkdir -p ./app/build/outputs/apk/
     - cp -av ./build/outputs/apk/NominatimGeocoderBackend-debug-unaligned.apk app/build/outputs/apk/app-debug-unaligned.apk
 # --- copy apk file to generic location ---
 
