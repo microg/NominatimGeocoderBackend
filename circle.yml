@@ -50,12 +50,9 @@ dependencies:
 
     - pwd ; ls -al
 
-    - cat app/build.gradle | grep 'useCompileDaemon'
-    - sed -i -e 's#scalaCompileOptions.useCompileDaemon = true#scalaCompileOptions.useCompileDaemon = false#' app/build.gradle
-    - cat app/build.gradle | grep 'useCompileDaemon'
-
     - ./gradlew assembleDebug --stacktrace --info --no-daemon
-    - ls -al app/build/outputs/apk/ ; exit 0
+    - ls -al build/outputs/apk/ ; exit 0
+    - find . -name '*.apk' ; exit 0
 
     - zip -d app/build/outputs/apk/app-debug-unaligned.apk META-INF/\*     # remove signature !!
     - cp -av app/build/outputs/apk/app-debug-unaligned.apk ~/app.apk ;
