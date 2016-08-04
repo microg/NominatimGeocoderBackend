@@ -36,6 +36,9 @@ dependencies {
 android {
     compileSdkVersion 22
     buildToolsVersion "22.0.0"
+    lintOptions {
+        abortOnError false
+    }
 }
 
 if (file('user.gradle').exists()) {

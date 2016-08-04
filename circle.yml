@@ -21,7 +21,7 @@ machine:
 
 ###### custom 3 ######
     CLASS_P: org.microg.nlp.backend.nominatim
-    START_INTENT_P: .BackendService
+    START_INTENT_P: .SettingsActivity
     # switch glibc to a memory conserving mode
     MALLOC_ARENA_MAX: "2"
 ###### custom 3 ######
