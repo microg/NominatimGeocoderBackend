@@ -94,7 +94,7 @@ dependencies:
     - pwd ; ls -al
 
 ###### custom ######
-    - sed -i -e 's,textReport .*,textReport true,' app/build.gradle ; exit 0
+    - sed -i -e 's,textReport .*,textReport true,' build.gradle ; exit 0
 ###### custom ######
 
     - ./gradlew lint --info
