@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          android:versionName="1.1.1"
-          android:versionCode="10101"
-          package="org.microg.nlp.backend.nominatim">
+    android:versionName="1.1.1"
+    android:versionCode="10101"
+    package="org.microg.nlp.backend.nominatim">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-sdk
-        android:minSdkVersion="9"
-        android:targetSdkVersion="22"/>
+        android:minSdkVersion="11"
+        android:targetSdkVersion="22" />
+
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
@@ -17,8 +18,18 @@
             android:name=".BackendService"
             android:label="@string/backend_name">
             <intent-filter>
-                <action android:name="org.microg.nlp.GEOCODER_BACKEND"/>
+                <action android:name="org.microg.nlp.GEOCODER_BACKEND" />
             </intent-filter>
+            <meta-data
+                android:name="org.microg.nlp.BACKEND_SETTINGS_ACTIVITY"
+                android:value="org.microg.nlp.backend.nominatim.SettingsActivity" />
         </service>
+
+        <activity android:name=".SettingsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
     </application>
+
 </manifest>
