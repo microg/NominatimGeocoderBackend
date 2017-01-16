@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          android:versionName="1.1.1"
-          android:versionCode="10101"
-          package="org.microg.nlp.backend.nominatim">
+<manifest package="org.microg.nlp.backend.nominatim"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <uses-sdk
         android:minSdkVersion="9"
-        android:targetSdkVersion="22"/>
+        android:targetSdkVersion="23"/>
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"

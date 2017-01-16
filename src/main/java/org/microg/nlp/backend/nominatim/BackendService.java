@@ -1,15 +1,30 @@
+/*
+ * Copyright 2013-2016 microG Project Team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.microg.nlp.backend.nominatim;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Address;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.microg.address.Formatter;
 import org.microg.nlp.api.GeocoderBackendService;
 
 import java.io.ByteArrayOutputStream;
@@ -17,16 +32,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static android.os.Build.VERSION.RELEASE;
+import static org.microg.nlp.backend.nominatim.BuildConfig.VERSION_NAME;
+
 public class BackendService extends GeocoderBackendService {
-    private static final String TAG = "NominatimGeocoderBackend";
+    private static final String TAG = "NominatimBackend";
     private static final String SERVICE_URL_MAPQUEST = "http://open.mapquestapi.com/nominatim/v1/";
-    private static final String SERVICE_URL_OSM = " http://nominatim.openstreetmap.org/";
+    private static final String SERVICE_URL_OSM = "http://nominatim.openstreetmap.org/";
     private static final String REVERSE_GEOCODE_URL =
             "%sreverse?format=json&accept-language=%s&lat=%f&lon=%f";
     private static final String SEARCH_GEOCODE_URL =
@@ -48,10 +68,22 @@ public class BackendService extends GeocoderBackendService {
     private static final String WIRE_COUNTRYNAME = "country";
     private static final String WIRE_COUNTRYCODE = "country_code";
 
+    private Formatter formatter;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        try {
+            formatter = new Formatter();
+        } catch (IOException e) {
+            Log.w(TAG, "Could not initialize address formatter", e);
+        }
+    }
+
     @Override
     protected List<Address> getFromLocation(double latitude, double longitude, int maxResults,
-            String locale) {
-        String url = String.format(Locale.US, REVERSE_GEOCODE_URL, SERVICE_URL_MAPQUEST,
+                                            String locale) {
+        String url = String.format(Locale.US, REVERSE_GEOCODE_URL, SERVICE_URL_OSM,
                 locale.split("_")[0], latitude, longitude);
         try {
             JSONObject result = new JSONObject(new AsyncGetRequest(this,
@@ -82,16 +114,16 @@ public class BackendService extends GeocoderBackendService {
 
     @Override
     protected List<Address> getFromLocationName(String locationName, int maxResults,
-            double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
-            double upperRightLongitude, String locale) {
+                                                double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
+                                                double upperRightLongitude, String locale) {
         String query = Uri.encode(locationName);
         String url;
         if (lowerLeftLatitude == 0 && lowerLeftLongitude == 0 && upperRightLatitude == 0 &&
                 upperRightLongitude == 0) {
-            url = String.format(Locale.US, SEARCH_GEOCODE_URL, SERVICE_URL_MAPQUEST,
+            url = String.format(Locale.US, SEARCH_GEOCODE_URL, SERVICE_URL_OSM,
                     locale.split("_")[0], query, maxResults);
         } else {
-            url = String.format(Locale.US, SEARCH_GEOCODE_WITH_BOX_URL, SERVICE_URL_MAPQUEST,
+            url = String.format(Locale.US, SEARCH_GEOCODE_WITH_BOX_URL, SERVICE_URL_OSM,
                     locale.split("_")[0], query, maxResults, lowerLeftLongitude,
                     upperRightLatitude, upperRightLongitude, lowerLeftLatitude);
         }
@@ -121,47 +153,52 @@ public class BackendService extends GeocoderBackendService {
         address.setLatitude(result.getDouble(WIRE_LATITUDE));
         address.setLongitude(result.getDouble(WIRE_LONGITUDE));
 
-        int line = 0;
         JSONObject a = result.getJSONObject(WIRE_ADDRESS);
 
-        if (a.has(WIRE_THOROUGHFARE)) {
-            address.setAddressLine(line++, a.getString(WIRE_THOROUGHFARE));
-            address.setThoroughfare(a.getString(WIRE_THOROUGHFARE));
-        }
-        if (a.has(WIRE_SUBLOCALITY)) {
-            address.setSubLocality(a.getString(WIRE_SUBLOCALITY));
-        }
-        if (a.has(WIRE_POSTALCODE)) {
-            address.setAddressLine(line++, a.getString(WIRE_POSTALCODE));
-            address.setPostalCode(a.getString(WIRE_POSTALCODE));
-        }
+        address.setThoroughfare(a.optString(WIRE_THOROUGHFARE));
+        address.setSubLocality(a.optString(WIRE_SUBLOCALITY));
+        address.setPostalCode(a.optString(WIRE_POSTALCODE));
+        address.setSubAdminArea(a.optString(WIRE_SUBADMINAREA));
+        address.setAdminArea(a.optString(WIRE_ADMINAREA));
+        address.setCountryName(a.optString(WIRE_COUNTRYNAME));
+        address.setCountryCode(a.optString(WIRE_COUNTRYCODE));
+
         if (a.has(WIRE_LOCALITY_CITY)) {
-            address.setAddressLine(line++, a.getString(WIRE_LOCALITY_CITY));
             address.setLocality(a.getString(WIRE_LOCALITY_CITY));
         } else if (a.has(WIRE_LOCALITY_TOWN)) {
-            address.setAddressLine(line++, a.getString(WIRE_LOCALITY_TOWN));
             address.setLocality(a.getString(WIRE_LOCALITY_TOWN));
         } else if (a.has(WIRE_LOCALITY_VILLAGE)) {
-            address.setAddressLine(line++, a.getString(WIRE_LOCALITY_VILLAGE));
             address.setLocality(a.getString(WIRE_LOCALITY_VILLAGE));
         }
-        if (a.has(WIRE_SUBADMINAREA)) {
-            address.setAddressLine(line++, a.getString(WIRE_SUBADMINAREA));
-            address.setSubAdminArea(a.getString(WIRE_SUBADMINAREA));
-        }
-        if (a.has(WIRE_ADMINAREA)) {
-            address.setAddressLine(line++, a.getString(WIRE_ADMINAREA));
-            address.setAdminArea(a.getString(WIRE_ADMINAREA));
-        }
-        if (a.has(WIRE_COUNTRYNAME)) {
-            address.setAddressLine(line++, a.getString(WIRE_COUNTRYNAME));
-            address.setCountryName(a.getString(WIRE_COUNTRYNAME));
-        }
-        if (a.has(WIRE_COUNTRYCODE)) {
-            address.setCountryCode(a.getString(WIRE_COUNTRYCODE));
+
+        if (formatter != null) {
+            Map<String, String> components = new HashMap<>();
+            for (String s : new IterableIterator<>(a.keys())) {
+                components.put(s, String.valueOf(a.get(s)));
+            }
+            String[] split = formatter.formatAddress(components).split("\n");
+            for (int i = 0; i < split.length; i++) {
+                Log.d(TAG, split[i]);
+                address.setAddressLine(i, split[i]);
+            }
+
+            //address.setFeatureName(formatter.guessName(components));
         }
 
         return address;
+    }
+
+    private class IterableIterator<T> implements Iterable<T> {
+        Iterator<T> i;
+
+        public IterableIterator(Iterator<T> i) {
+            this.i = i;
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return i;
+        }
     }
 
     private class AsyncGetRequest extends Thread {
@@ -182,9 +219,8 @@ public class BackendService extends GeocoderBackendService {
             synchronized (done) {
                 try {
                     Log.d(TAG, "Requesting " + url);
-                    HttpURLConnection connection = (HttpURLConnection) new URL(url)
-                            .openConnection();
-                    setUserAgentOnConnection(connection);
+                    HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                    connection.setRequestProperty(USER_AGENT, String.format(USER_AGENT_TEMPLATE, VERSION_NAME, RELEASE));
                     connection.setDoInput(true);
                     InputStream inputStream = connection.getInputStream();
                     result = readStreamToEnd(inputStream);
@@ -218,17 +254,6 @@ public class BackendService extends GeocoderBackendService {
 
         public String retrieveString() {
             return new String(retrieveAllBytes());
-        }
-
-        private void setUserAgentOnConnection(URLConnection connection) {
-            try {
-                connection.setRequestProperty(USER_AGENT, String.format(USER_AGENT_TEMPLATE,
-                        context.getPackageManager().getPackageInfo(context.getPackageName(),
-                                0).versionName, Build.VERSION.RELEASE));
-            } catch (PackageManager.NameNotFoundException e) {
-                connection.setRequestProperty(USER_AGENT, String.format(USER_AGENT_TEMPLATE, 0,
-                        Build.VERSION.RELEASE));
-            }
         }
 
         private byte[] readStreamToEnd(InputStream is) throws IOException {
