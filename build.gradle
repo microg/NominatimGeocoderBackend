@@ -49,7 +49,7 @@ repositories {
 
 dependencies {
     compile 'org.microg:unifiednlp-api:1.5.3'
-    compile 'org.microg:address-formatter:0.1'
+    compile 'org.microg:address-formatter:0.2'
 }
 
 android {

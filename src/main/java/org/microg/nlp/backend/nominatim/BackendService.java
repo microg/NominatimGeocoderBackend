@@ -182,7 +182,7 @@ public class BackendService extends GeocoderBackendService {
                 address.setAddressLine(i, split[i]);
             }
 
-            //address.setFeatureName(formatter.guessName(components));
+            address.setFeatureName(formatter.guessName(components));
         }
 
         return address;
