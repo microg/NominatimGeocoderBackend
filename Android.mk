@@ -2,14 +2,14 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := Nominatem
+LOCAL_MODULE := NominatimNlpBackend
 LOCAL_MODULE_TAGS := optional
-LOCAL_PACKAGE_NAME := Nominatem
+LOCAL_PACKAGE_NAME := NominatimNlpBackend
 
 nominatem_root  := $(LOCAL_PATH)
 nominatem_out   := $(OUT_DIR)/target/common/obj/APPS/$(LOCAL_MODULE)_intermediates
 nominatem_build := $(nominatem_root)/build
-nominatem_apk   := build/outputs/apk/Nominatem-release-unsigned.apk
+nominatem_apk   := build/outputs/apk/$(LOCAL_PACKAGE_NAME)-release-unsigned.apk
 
 $(nominatem_root)/$(nominatem_apk):
 	rm -Rf $(nominatem_build)
