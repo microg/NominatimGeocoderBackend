@@ -15,13 +15,14 @@ import org.microg.nlp.api.GeocoderBackendService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class BackendService extends GeocoderBackendService {
     private static final String TAG = "NominatimGeocoder";
@@ -184,7 +185,7 @@ public class BackendService extends GeocoderBackendService {
             synchronized (done) {
                 try {
                     Log.d(TAG, "Requesting " + url);
-                    HttpURLConnection connection = (HttpURLConnection) new URL(url)
+                    HttpsURLConnection connection = (HttpsURLConnection) new URL(url)
                             .openConnection();
                     setUserAgentOnConnection(connection);
                     connection.setDoInput(true);
