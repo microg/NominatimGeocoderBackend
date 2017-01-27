@@ -24,9 +24,10 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BackendService extends GeocoderBackendService {
-    private static final String TAG = "NominatimGeocoderBackend";
+    private static final String TAG = "NominatimGeocoder";
     private static final String SERVICE_URL_MAPQUEST = "http://open.mapquestapi.com/nominatim/v1/";
     private static final String SERVICE_URL_OSM = " http://nominatim.openstreetmap.org/";
+
     private static final String REVERSE_GEOCODE_URL =
             "%sreverse?format=json&accept-language=%s&lat=%f&lon=%f";
     private static final String SEARCH_GEOCODE_URL =
