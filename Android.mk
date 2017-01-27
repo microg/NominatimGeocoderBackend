@@ -9,7 +9,7 @@ LOCAL_PACKAGE_NAME := NominatimNlpBackend
 nominatim_root  := $(LOCAL_PATH)
 nominatim_out   := $(OUT_DIR)/target/common/obj/APPS/$(LOCAL_MODULE)_intermediates
 nominatim_build := $(nominatim_root)/build
-nominatim_apk   := build/outputs/apk/NominatimNlpBackend-release-unsigned.apk
+nominatim_apk   := build/outputs/apk/NominatimGeocoderBackend-release-unsigned.apk
 
 $(nominatim_root)/$(nominatim_apk):
 	rm -Rf $(nominatim_build)
