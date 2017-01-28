@@ -30,8 +30,8 @@ import javax.net.ssl.HttpsURLConnection;
 public class BackendService extends GeocoderBackendService {
     private static final String TAG = "NominatimGeocoder";
 
-    private static final String SERVICE_URL_MAPQUEST = "https://open.mapquestapi.com/nominatim/v1/";
-    private static final String SERVICE_URL_OSM = "https://nominatim.openstreetmap.org/";
+    private static final String SERVICE_URL_MAPQUEST = "https://open.mapquestapi.com/nominatim/v1";
+    private static final String SERVICE_URL_OSM = "https://nominatim.openstreetmap.org";
 
     private static final String REVERSE_GEOCODE_URL =
             "%s/reverse?%sformat=json&accept-language=%s&lat=%f&lon=%f";
