@@ -57,6 +57,18 @@ public class BackendService extends GeocoderBackendService {
     private String mApiUrl;
     private String mAPIKey;
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        readPrefs();
+    }
+
+    @Override
+    protected void onOpen() {
+        super.onOpen();
+        readPrefs();
+    }
+
     private void readPrefs() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
@@ -75,8 +87,6 @@ public class BackendService extends GeocoderBackendService {
     @Override
     protected List<Address> getFromLocation(double latitude, double longitude, int maxResults,
             String locale) {
-        readPrefs();
-
         String url = String.format(Locale.US, REVERSE_GEOCODE_URL, mApiUrl, mAPIKey,
                 locale.split("_")[0], latitude, longitude);
         try {
@@ -110,8 +120,6 @@ public class BackendService extends GeocoderBackendService {
     protected List<Address> getFromLocationName(String locationName, int maxResults,
             double lowerLeftLatitude, double lowerLeftLongitude, double upperRightLatitude,
             double upperRightLongitude, String locale) {
-        readPrefs();
-
         String query = Uri.encode(locationName);
         String url;
         if (lowerLeftLatitude == 0 && lowerLeftLongitude == 0 && upperRightLatitude == 0 &&
