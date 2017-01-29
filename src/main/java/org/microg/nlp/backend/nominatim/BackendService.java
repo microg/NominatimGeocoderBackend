@@ -201,8 +201,8 @@ public class BackendService extends GeocoderBackendService {
     }
 
     private class AsyncGetRequest extends Thread {
-        public static final String USER_AGENT = "User-Agent";
-        public static final String USER_AGENT_TEMPLATE = "UnifiedNlp/%s (Linux; Android %s)";
+        static final String USER_AGENT = "User-Agent";
+        static final String USER_AGENT_TEMPLATE = "UnifiedNlp/%s (Linux; Android %s)";
         private final AtomicBoolean done = new AtomicBoolean(false);
         private final Context context;
         private final String url;
@@ -232,12 +232,12 @@ public class BackendService extends GeocoderBackendService {
             }
         }
 
-        public AsyncGetRequest asyncStart() {
+        AsyncGetRequest asyncStart() {
             start();
             return this;
         }
 
-        public byte[] retrieveAllBytes() {
+        byte[] retrieveAllBytes() {
             if (!done.get()) {
                 synchronized (done) {
                     while (!done.get()) {
@@ -252,7 +252,7 @@ public class BackendService extends GeocoderBackendService {
             return result;
         }
 
-        public String retrieveString() {
+        String retrieveString() {
             return new String(retrieveAllBytes());
         }
 
