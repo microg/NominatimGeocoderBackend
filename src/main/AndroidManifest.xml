@@ -25,7 +25,9 @@
                 android:value="org.microg.nlp.backend.nominatim.SettingsActivity" />
         </service>
 
-        <activity android:name=".SettingsActivity">
+        <activity android:name=".SettingsActivity"
+                  android:theme="@style/SettingsTheme"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>

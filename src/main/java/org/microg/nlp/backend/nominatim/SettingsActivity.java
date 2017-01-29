@@ -1,26 +1,31 @@
 package org.microg.nlp.backend.nominatim;
 
 import android.content.SharedPreferences;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
 import android.os.Bundle;
 
-import java.util.Objects;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
 
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Display the fragment as the main content.
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new PrefsFragment()).commit();
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(R.string.app_name);
+            getSupportActionBar().show();
+        }
 
+        // Display the fragment as the main content.
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(android.R.id.content, new PrefsFragment())
+                .commit();
     }
 
-    public static class PrefsFragment extends PreferenceFragment {
+    public static class PrefsFragment extends PreferenceFragmentCompat {
         public static final String catApiKeyToken = "cat_api_preference";
         public static final String apiChoiceToken = "api_server_choice";
         public static final String mapQuestApiKeyToken = "api_preference";
@@ -33,9 +38,7 @@ public class SettingsActivity extends PreferenceActivity {
         private Preference mMapQuestApiKeyPref;
 
         @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             shPref = getPreferenceManager().getSharedPreferences();
 
             // Load the preferences from an XML resource
