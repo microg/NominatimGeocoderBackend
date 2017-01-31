@@ -14,7 +14,7 @@ Automatied Builds
 The APK can be downloaded from CircleCI, [here](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/NominatimGeocoderBackend.apk?filter=successful&branch=master)
 
 or via QR-Code
-[![here](https://circleci.com/api/v1/project/zoff99/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/QR_apk.png?filter=successful)](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/NominatimGeocoderBackend.apk?filter=successful&branch=master)
+[![here](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/QR_apk.png?filter=successful&branch=master)](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/NominatimGeocoderBackend.apk?filter=successful&branch=master)
 
 Used libraries
 --------------
