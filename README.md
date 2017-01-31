@@ -6,6 +6,15 @@ Building
 --------
 Build using gradle. Remember to `git submodule init` before.
 
+Automatied Builds
+------------------
+**Travis:** [![Build Status](https://travis-ci.org/microg/NominatimGeocoderBackend.png?branch=master)](https://travis-ci.org/microg/NominatimGeocoderBackend)
+**CircleCI:** [![CircleCI](https://circleci.com/gh/microg/NominatimGeocoderBackend/tree/master.png?style=badge)](https://circleci.com/gh/microg/NominatimGeocoderBackend)
+
+The APK can be downloaded from CircleCI, [here](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/NominatimGeocoderBackend.apk?filter=successful&branch=master)
+
+or via QR-Code
+[![here](https://circleci.com/api/v1/project/zoff99/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/QR_apk.png?filter=successful&branch=master)](https://circleci.com/api/v1/project/microg/NominatimGeocoderBackend/latest/artifacts/0/$CIRCLE_ARTIFACTS/NominatimGeocoderBackend.apk?filter=successful&branch=master)
 
 Used libraries
 --------------
