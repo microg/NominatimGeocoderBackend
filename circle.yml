@@ -77,7 +77,7 @@ dependencies:
 
 # --- copy apk file to generic location ---
     - mkdir -p ./app/build/outputs/apk/
-    - cp -av ./build/outputs/apk/./build/outputs/apk/NominatimGeocoderBackend-release-unsigned.apk app/build/outputs/apk/app-debug-unaligned.apk
+    - cp -av ./build/outputs/apk/NominatimGeocoderBackend-release-unsigned.apk app/build/outputs/apk/app-debug-unaligned.apk
 # --- copy apk file to generic location ---
 
     - zip -d app/build/outputs/apk/app-debug-unaligned.apk META-INF/\*     # remove signature !!
