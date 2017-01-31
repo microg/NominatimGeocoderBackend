@@ -50,10 +50,16 @@ android {
     lintOptions {
         abortOnError false
         absolutePaths false
-        // lintConfig file("lint.xml")
+        showAll true
+        textReport true
+        xmlReport true
+        htmlReport true
+        textOutput file("lint-report.txt")
+        htmlOutput file("lint-report.html")
+        xmlOutput file("lint-report.xml")   
     }
 
-compileOptions {
+    compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
