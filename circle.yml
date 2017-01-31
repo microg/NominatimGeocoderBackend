@@ -63,14 +63,11 @@ dependencies:
 
     - pwd ; ls -al
 
-###### custom ######
-    #- sed -i -e 's,textReport .*,textReport true,' build.gradle ; exit 0
-###### custom ######
-
     - ./gradlew lint --info
     - ./gradlew assembleRelease --stacktrace --info --no-daemon
     - ls -al build/outputs/apk/ ; exit 0
-    - find . -name '*.apk' ; exit 0
+    - find . -name '*.apk' -exec ls -al {} \; ; exit 0
+    - find . -name '*lint-report*' -exec ls -al {} \; ; exit 0
 
 # --- copy apk file to generic location ---
     - mkdir -p ./app/build/outputs/apk/
