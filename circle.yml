@@ -63,6 +63,8 @@ dependencies:
 
     - pwd ; ls -al
 
+compile:
+  override:
     - ./gradlew lint --info
     - ./gradlew assembleRelease --stacktrace --info --no-daemon
     - ls -al build/outputs/apk/ ; exit 0
