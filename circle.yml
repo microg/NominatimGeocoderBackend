@@ -69,6 +69,12 @@ dependencies:
     - find . -name '*.apk' -exec ls -al {} \; ; exit 0
     - find . -name '*lint-report*' -exec ls -al {} \; ; exit 0
 
+# --- save lint output ---
+    - cp -av ./lint-report.html $CIRCLE_ARTIFACTS/ ; exit 0
+    - cp -av ./lint-report.xml $CIRCLE_ARTIFACTS/ ; exit 0
+    - cp -av ./lint-report.txt $CIRCLE_ARTIFACTS/ ; exit 0
+# --- save lint output ---
+
 # --- copy apk file to generic location ---
     - mkdir -p ./app/build/outputs/apk/
     - cp -av ./build/outputs/apk/./build/outputs/apk/NominatimGeocoderBackend-release-unsigned.apk app/build/outputs/apk/app-debug-unaligned.apk
