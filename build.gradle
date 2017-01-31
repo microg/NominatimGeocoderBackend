@@ -37,6 +37,27 @@ dependencies {
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
+
+    defaultConfig {
+        multiDexEnabled false
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    aaptOptions {  
+        additionalParameters "--no-version-vectors"  
+    }
+
+    lintOptions {
+        abortOnError false
+        absolutePaths false
+        // lintConfig file("lint.xml")
+    }
+
+compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
 }
 
 if (file('user.gradle').exists()) {
