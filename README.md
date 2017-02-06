@@ -1,10 +1,10 @@
 NominatimGeocoderBackend
 ========================
-[UnifiedNlp](https://github.com/microg/android_packages_apps_UnifiedNlp) geocoder backend that uses MapQuest's Nominatim service (based on OpenStreeMap)
+[UnifiedNlp](https://github.com/microg/android_packages_apps_UnifiedNlp) geocoder backend that uses OSM Nominatim service.
 
 Building
 --------
-Build using gradle. Remember to `git submodule init` before.
+Build using gradle.
 
 
 Used libraries
@@ -13,7 +13,7 @@ Used libraries
 
 License
 -------
-    Copyright 2014-2015 μg Project Team
+    Copyright 2014-2017 microG Project Team
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

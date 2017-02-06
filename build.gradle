@@ -25,6 +25,13 @@ buildscript {
 
 apply plugin: 'com.android.application'
 
+/* This is a hack, trying to provide release updates to F-Droid until it can properly handle Gradle
+applicationId "org.microg.nlp.backend.nominatim"
+versionName "1.2.0"
+versionCode "20038"
+ */
+
+
 String getMyVersionName() {
     def stdout = new ByteArrayOutputStream()
     if (rootProject.file("gradlew").exists())
