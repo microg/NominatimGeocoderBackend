@@ -50,11 +50,12 @@ repositories {
 dependencies {
     compile 'org.microg:unifiednlp-api:1.5.3'
     compile 'org.microg:address-formatter:0.2'
+    compile 'com.android.support:preference-v7:25.1.0'
 }
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.3"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         versionName getMyVersionName()
