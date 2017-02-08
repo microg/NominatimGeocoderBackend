@@ -2,11 +2,11 @@ package org.microg.nlp.backend.nominatim;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
+
+import com.takisoft.fix.support.v7.preference.PreferenceFragmentCompat;
 
 public class SettingsActivity extends AppCompatActivity {
     @Override
@@ -38,7 +38,7 @@ public class SettingsActivity extends AppCompatActivity {
         private Preference mMapQuestApiKeyPref;
 
         @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        public void onCreatePreferencesFix(Bundle savedInstanceState, String rootKey) {
             shPref = getPreferenceManager().getSharedPreferences();
 
             // Load the preferences from an XML resource

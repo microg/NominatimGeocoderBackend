@@ -27,8 +27,8 @@ apply plugin: 'com.android.application'
 
 /* This is a hack, trying to provide release updates to F-Droid until it can properly handle Gradle
 applicationId "org.microg.nlp.backend.nominatim"
-versionName "1.2.0"
-versionCode "20038"
+versionName "1.2.1"
+versionCode "20039"
  */
 
 
@@ -51,13 +51,13 @@ int getMyVersionCode() {
 }
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
     compile 'org.microg:unifiednlp-api:1.5.3'
     compile 'org.microg:address-formatter:0.2'
-    compile 'com.android.support:preference-v7:25.1.0'
+    compile 'com.takisoft.fix:preference-v7:25.1.0.2'
 }
 
 android {

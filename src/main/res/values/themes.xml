@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="SettingsTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="preferenceTheme">@style/PreferenceFragment</item>
-    </style>
+    <style name="SettingsTheme" parent="@style/PreferenceFixTheme.Light.DarkActionBar" />
 </resources>
