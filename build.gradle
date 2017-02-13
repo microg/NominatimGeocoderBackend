@@ -67,6 +67,8 @@ android {
     defaultConfig {
         versionName getMyVersionName()
         versionCode(20000 + getMyVersionCode())
+        minSdkVersion 9
+        targetSdkVersion 25
     }
 }
 
