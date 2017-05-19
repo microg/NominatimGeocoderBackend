@@ -19,7 +19,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:2.3.1'
     }
 }
 
@@ -27,8 +27,8 @@ apply plugin: 'com.android.application'
 
 /* This is a hack, trying to provide release updates to F-Droid until it can properly handle Gradle
 applicationId "org.microg.nlp.backend.nominatim"
-versionName "1.2.1"
-versionCode "20039"
+versionName "1.2.2"
+versionCode "20042"
  */
 
 
@@ -55,9 +55,9 @@ repositories {
 }
 
 dependencies {
-    compile 'org.microg:unifiednlp-api:1.5.3'
-    compile 'org.microg:address-formatter:0.2'
-    compile 'com.takisoft.fix:preference-v7:25.1.0.2'
+    compile 'org.microg:unifiednlp-api:1.5.6'
+    compile 'org.microg:address-formatter:0.2.1'
+    compile 'com.takisoft.fix:preference-v7:25.3.1.0'
 }
 
 android {
