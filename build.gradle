@@ -69,6 +69,9 @@ android {
         versionCode(20000 + getMyVersionCode())
         minSdkVersion 9
         targetSdkVersion 25
+        jackOptions {
+            enabled true
+        }
     }
 }
 
