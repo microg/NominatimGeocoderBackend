@@ -2,6 +2,9 @@ NominatimGeocoderBackend
 ========================
 [UnifiedNlp](https://github.com/microg/android_packages_apps_UnifiedNlp) geocoder backend that uses OSM Nominatim service.
 
+<a href="https://f-droid.org/packages/org.microg.nlp.backend.nominatim/" target="_blank">
+<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80"/></a>
+
 Building
 --------
 Build using gradle.
