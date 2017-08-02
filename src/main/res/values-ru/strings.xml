@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nominatim Geocoder Backend</string>
+    <string name="backend_name">Nominatim</string>
+
+    <string name="choose_server">Выберите сервер Nominatim API</string>
+    <string name="server_access">Доступ к серверу MapQuest</string>
+    <string name="api_title">API ключ разработчика MapQuest</string>
+    <string name="api_summary">API ключ разработчика MapQuest</string>
+    <string name="api_dialog_title">Введите ваш API ключ разработчика MapQuest.</string>
+</resources>
