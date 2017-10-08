@@ -16,9 +16,11 @@
 
 package org.microg.nlp.backend.nominatim;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.net.Uri;
 import android.os.Build;
@@ -42,11 +44,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static android.os.Build.VERSION.RELEASE;
+import android.os.Parcel;
+import android.os.PowerManager;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import static org.microg.nlp.backend.nominatim.BuildConfig.VERSION_NAME;
+import static org.microg.nlp.backend.nominatim.ReverseGeocodingCacheContract.LocationAddressCache;
+import static org.microg.nlp.backend.nominatim.LogToFile.appendLog;
 
 public class BackendService extends GeocoderBackendService {
     private static final String TAG = "NominatimGeocoder";
@@ -60,6 +69,8 @@ public class BackendService extends GeocoderBackendService {
             "%s/search?%sformat=json&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d";
     private static final String SEARCH_GEOCODE_WITH_BOX_URL =
             SEARCH_GEOCODE_URL + "&viewbox=%f,%f,%f,%f";
+
+    SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private static final String WIRE_LATITUDE = "lat";
     private static final String WIRE_LONGITUDE = "lon";
@@ -75,6 +86,11 @@ public class BackendService extends GeocoderBackendService {
     private static final String WIRE_COUNTRYNAME = "country";
     private static final String WIRE_COUNTRYCODE = "country_code";
 
+    private ReverseGeocodingCacheDbHelper mDbHelper;
+
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+
     private Formatter formatter;
 
     private String mApiUrl;
@@ -83,53 +99,133 @@ public class BackendService extends GeocoderBackendService {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        LogToFile.logFilePathname = sharedPreferences.getString(SettingsActivity.KEY_DEBUG_FILE,"");
+        LogToFile.logToFileEnabled = sharedPreferences.getBoolean(SettingsActivity.KEY_DEBUG_TO_FILE, false);
+        LogToFile.logFileHoursOfLasting = Integer.valueOf(sharedPreferences.getString(SettingsActivity.KEY_DEBUG_FILE_LASTING_HOURS, "24"));
+
+        if (!sharedPreferences.contains(SettingsActivity.LOCATION_CACHE_ENABLED)) {
+            sharedPreferences.edit().putBoolean(SettingsActivity.LOCATION_CACHE_ENABLED, true).apply();
+        }
+
         try {
             formatter = new Formatter();
         } catch (IOException e) {
             Log.w(TAG, "Could not initialize address formatter", e);
+            appendLog(TAG, e.getMessage(), e);
         }
         readPrefs();
+        powerManager = ((PowerManager) this.getSystemService(Context.POWER_SERVICE));
     }
 
     @Override
     protected void onOpen() {
         super.onOpen();
         readPrefs();
+        powerManager = ((PowerManager) this.getSystemService(Context.POWER_SERVICE));
     }
 
     private void readPrefs() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-        if (sp.getString(SettingsActivity.PrefsFragment.apiChoiceToken, "OSM").equals("OSM")) {
+        if (sp.getString(SettingsActivity.API_CHOICE_TOKEN, "OSM").equals("OSM")) {
             mApiUrl = SERVICE_URL_OSM;
             // No API key for OSM
             mAPIKey = "";
         } else {
             mApiUrl = SERVICE_URL_MAPQUEST;
-            mAPIKey = "key=" + sp.getString(SettingsActivity.PrefsFragment.mapQuestApiKeyToken, "NA")
+            mAPIKey = "key=" + sp.getString(SettingsActivity.MAP_QUEST_API_KEY_TOKEN, "NA")
                     + "&";
         }
     }
 
-
     @Override
-    protected List<Address> getFromLocation(double latitude, double longitude, int maxResults,
-            String locale) {
+    protected List<Address> getFromLocation(double latitude,
+                                            double longitude,
+                                            int maxResults,
+                                            String locale) {
+
+        appendLog(TAG, "getFromLocation:" + latitude + ", " + longitude + ", " + locale);
+        if (mDbHelper == null) {
+            mDbHelper = new ReverseGeocodingCacheDbHelper(getApplicationContext());
+        }
+
+        List<Address> addressesFromCache = retrieveLocationFromCache(latitude, longitude, locale);
+        if (addressesFromCache != null) {
+            return addressesFromCache;
+        }
+
+        wakeUp();
+
         String url = String.format(Locale.US, REVERSE_GEOCODE_URL, mApiUrl, mAPIKey,
                 locale.split("_")[0], latitude, longitude);
+        appendLog(TAG, "Constructed URL " + url);
         try {
             JSONObject result = new JSONObject(new AsyncGetRequest(this,
                     url).asyncStart().retrieveString());
+            appendLog(TAG, "result from nominatim server:" + result);
+
+            if (wakeLock != null) {
+                try {
+                    wakeLock.release();
+                } catch (Throwable th) {
+                    // ignoring this exception, probably wakeLock was already released
+                }
+            }
+
             Address address = parseResponse(localeFromLocaleString(locale), result);
             if (address != null) {
                 List<Address> addresses = new ArrayList<>();
                 addresses.add(address);
+                storeAddressToCache(latitude, longitude, locale, address);
                 return addresses;
             }
         } catch (Exception e) {
             Log.w(TAG, e);
+            appendLog(TAG, e.getMessage(), e);
         }
         return null;
+    }
+
+    private void wakeUp() {
+        appendLog(TAG, "powerManager:" + powerManager);
+
+        String wakeUpStrategy = PreferenceManager.getDefaultSharedPreferences(this).getString(SettingsActivity.KEY_WAKE_UP_STRATEGY, "nowakeup");
+
+        appendLog(TAG, "wakeLock:wakeUpStrategy:" + wakeUpStrategy);
+
+        if ("nowakeup".equals(wakeUpStrategy)) {
+            return;
+        }
+
+        int powerLockID;
+
+        if ("wakeupfull".equals(wakeUpStrategy)) {
+            powerLockID = PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP;
+        } else {
+            powerLockID = PowerManager.PARTIAL_WAKE_LOCK;
+        }
+
+        appendLog(TAG, "wakeLock:powerLockID:" + powerLockID);
+
+        boolean isInUse;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            isInUse = powerManager.isInteractive();
+        } else {
+            isInUse = powerManager.isScreenOn();
+        }
+
+        if (!isInUse) {
+            wakeLock = powerManager.newWakeLock(powerLockID, TAG);
+            appendLog(TAG, "wakeLock:" + wakeLock + ":" + wakeLock.isHeld());
+            if (!wakeLock.isHeld()) {
+                wakeLock.acquire();
+            }
+            appendLog(TAG, "wakeLock acquired");
+        }
     }
 
     private static Locale localeFromLocaleString(String localeString) {
@@ -172,6 +268,7 @@ public class BackendService extends GeocoderBackendService {
             if (!addresses.isEmpty()) return addresses;
         } catch (Exception e) {
             Log.w(TAG, e);
+            appendLog(TAG, e.getMessage(), e);
         }
         return null;
     }
@@ -248,16 +345,23 @@ public class BackendService extends GeocoderBackendService {
 
         @Override
         public void run() {
+            appendLog(TAG, "Sync key (done)" + done);
             synchronized (done) {
                 try {
                     Log.d(TAG, "Requesting " + url);
+                    appendLog(TAG, "Requesting " + url);
                     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                    appendLog(TAG, "Connection opened");
                     connection.setRequestProperty(USER_AGENT, String.format(USER_AGENT_TEMPLATE, VERSION_NAME, RELEASE));
                     connection.setDoInput(true);
+                    appendLog(TAG, "Getting input stream");
                     InputStream inputStream = connection.getInputStream();
+                    appendLog(TAG, "Reading input stream");
                     result = readStreamToEnd(inputStream);
+                    appendLog(TAG, "Input stream read");
                 } catch (Exception e) {
                     Log.w(TAG, e);
+                    appendLog(TAG, e.getMessage(), e);
                 }
                 done.set(true);
                 done.notifyAll();
@@ -302,6 +406,165 @@ public class BackendService extends GeocoderBackendService {
                 is.close();
             }
             return bos.toByteArray();
+        }
+    }
+
+    private List<Address> retrieveLocationFromCache(double latitude, double longitude, String locale) {
+        boolean useCache = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(SettingsActivity.LOCATION_CACHE_ENABLED, true);
+
+        if (!useCache) {
+            return null;
+        }
+
+        Address addressFromCache = getResultFromCache(latitude, longitude, locale);
+        appendLog(TAG, "address retrieved from cache:" + addressFromCache);
+        if (addressFromCache == null) {
+            return null;
+        }
+        List<Address> addresses = new ArrayList<>();
+        addresses.add(addressFromCache);
+        return addresses;
+    }
+
+    private void storeAddressToCache(double latitude, double longitude, String locale, Address address) {
+
+        boolean useCache = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(SettingsActivity.LOCATION_CACHE_ENABLED, true);
+
+        if (!useCache) {
+            return;
+        }
+
+        // Gets the data repository in write mode
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        // Create a new map of values, where column names are the keys
+        ContentValues values = new ContentValues();
+        values.put(LocationAddressCache.COLUMN_NAME_ADDRESS, getAddressAsBytes(address));
+        values.put(LocationAddressCache.COLUMN_NAME_LONGITUDE, longitude);
+        values.put(LocationAddressCache.COLUMN_NAME_LATITUDE, latitude);
+        values.put(LocationAddressCache.COLUMN_NAME_LOCALE, locale);
+        values.put(LocationAddressCache.COLUMN_NAME_CREATED, iso8601Format.format(new Date()));
+
+        long newLocationRowId = db.insert(LocationAddressCache.TABLE_NAME, null, values);
+
+        appendLog(TAG, "storedAddress:" + latitude + ", " + longitude + ", " + newLocationRowId + ", " + address);
+    }
+
+    private Address getResultFromCache(double latitude, double longitude, String locale) {
+
+        new DeleteOldRows().start();
+
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        String[] projection = {
+            LocationAddressCache.COLUMN_NAME_ADDRESS
+        };
+
+        double latitudeLow = latitude - 0.0001;
+        double latitudeHigh = latitude + 0.0001;
+        double longitudeLow = longitude - 0.0001;
+        double longitudeHigh = longitude + 0.0001;
+
+        String selection = LocationAddressCache.COLUMN_NAME_LONGITUDE + " <= ? and " +
+                           LocationAddressCache.COLUMN_NAME_LONGITUDE + " >= ? and " +
+                           LocationAddressCache.COLUMN_NAME_LATITUDE + " <= ? and " +
+                           LocationAddressCache.COLUMN_NAME_LATITUDE + " >= ? and " +
+                           LocationAddressCache.COLUMN_NAME_LOCALE + " = ? ";
+        String[] selectionArgs = { String.valueOf(longitudeHigh),
+                                   String.valueOf(longitudeLow),
+                                   String.valueOf(latitudeHigh),
+                                   String.valueOf(latitudeLow),
+                                   locale };
+
+        Cursor cursor = db.query(
+            LocationAddressCache.TABLE_NAME,
+            projection,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
+            );
+
+        if (!cursor.moveToNext()) {
+            cursor.close();
+            return null;
+        }
+
+        byte[] cachedAddressBytes = cursor.getBlob(
+                                      cursor.getColumnIndexOrThrow(LocationAddressCache.COLUMN_NAME_ADDRESS));
+        cursor.close();
+
+        return ReverseGeocodingCacheDbHelper.getAddressFromBytes(cachedAddressBytes);
+    }
+
+    private boolean recordDateIsNotValidOrIsTooOld(String recordCreatedTxt) {
+        Calendar now = Calendar.getInstance();
+        Calendar calendarRecordCreated = Calendar.getInstance();
+        try {
+            Date recordCreated = iso8601Format.parse(recordCreatedTxt);
+            calendarRecordCreated.setTime(recordCreated);
+        } catch (ParseException ex) {
+            Log.e(TAG, "Date of date created could not be parsed. Orignal value is " + recordCreatedTxt, ex);
+            appendLog(TAG, ex.getMessage(), ex);
+            return true;
+        }
+
+        int timeToLiveRecordsInCacheInHours = Integer.parseInt(
+                        PreferenceManager.getDefaultSharedPreferences(this).getString(SettingsActivity.LOCATION_CACHE_LASTING_HOURS, "720"));
+
+        calendarRecordCreated.add(Calendar.HOUR_OF_DAY, timeToLiveRecordsInCacheInHours);
+        return calendarRecordCreated.before(now);
+    }
+
+    private void deleteRecordFromTable(Integer recordId) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        String selection = LocationAddressCache._ID + " = ?";
+        String[] selectionArgs = { recordId.toString() };
+        db.delete(LocationAddressCache.TABLE_NAME, selection, selectionArgs);
+    }
+
+    private byte[] getAddressAsBytes(Address address) {
+        final Parcel parcel = Parcel.obtain();
+        address.writeToParcel(parcel, 0);
+        byte[] addressBytes = parcel.marshall();
+        parcel.recycle();
+        return addressBytes;
+    }
+
+    private class DeleteOldRows extends Thread {
+
+        @Override
+        public void run() {
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+            String[] projection = {
+                LocationAddressCache.COLUMN_NAME_CREATED,
+                LocationAddressCache._ID
+            };
+
+            Cursor cursor = db.query(
+                LocationAddressCache.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null
+                );
+
+            while (cursor.moveToNext()) {
+                Integer recordId = cursor.getInt(
+                                 cursor.getColumnIndexOrThrow(LocationAddressCache._ID));
+
+                String recordCreatedTxt = cursor.getString(
+                                            cursor.getColumnIndexOrThrow(LocationAddressCache.COLUMN_NAME_CREATED));
+
+                if (recordDateIsNotValidOrIsTooOld(recordCreatedTxt)) {
+                    deleteRecordFromTable(recordId);
+                }
+            }
+            cursor.close();
         }
     }
 }
