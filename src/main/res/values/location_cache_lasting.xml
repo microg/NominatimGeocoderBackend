@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="location_cache_lasting_entries">
+        <item>@string/location_cache_12_label</item>
+        <item>@string/location_cache_24_label</item>
+        <item>@string/location_cache_168_label</item>
+        <item>@string/location_cache_720_label</item>
+        <item>@string/location_cache_2190_label</item>
+        <item>@string/location_cache_4380_label</item>
+        <item>@string/location_cache_8760_label</item>
+        <item>@string/location_cache_88888_label</item>
+    </string-array>
+    <string-array name="location_cache_lasting_values">
+        <item>12</item>
+        <item>24</item>
+        <item>168</item>
+        <item>720</item>
+        <item>2190</item>
+        <item>4380</item>
+        <item>8760</item>
+        <item>88888</item>
+    </string-array>
+</resources>

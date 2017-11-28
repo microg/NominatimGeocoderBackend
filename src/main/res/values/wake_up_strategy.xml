@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="wake_up_strategy_entries">
+        <item>@string/nowakeup_label</item>
+        <item>@string/wakeuppartial_label</item>
+        <item>@string/wakeupfull_label</item>
+    </string-array>
+    <string-array name="wake_up_strategy_values">
+        <item>nowakeup</item>
+        <item>wakeuppartial</item>
+        <item>wakeupfull</item>
+    </string-array>
+</resources>
