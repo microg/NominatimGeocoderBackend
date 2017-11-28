@@ -12,7 +12,7 @@ public final class ReverseGeocodingCacheContract {
         LocationAddressCache.COLUMN_NAME_LONGITUDE + " double," +
         LocationAddressCache.COLUMN_NAME_LATITUDE + " double," +
         LocationAddressCache.COLUMN_NAME_LOCALE + " text," +
-        LocationAddressCache.COLUMN_NAME_CREATED + " text," +
+        LocationAddressCache.COLUMN_NAME_CREATED + " integer," +
         LocationAddressCache.COLUMN_NAME_ADDRESS + " blob)";
 
     protected static final String SQL_DELETE_TABLE_LOCATION_ADDRESS_CACHE =

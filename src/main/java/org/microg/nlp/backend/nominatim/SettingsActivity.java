@@ -1,12 +1,15 @@
 package org.microg.nlp.backend.nominatim;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
@@ -15,6 +18,8 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.takisoft.fix.support.v7.preference.PreferenceFragmentCompat;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -27,6 +32,8 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String CAT_API_KEY_TOKEN = "cat_api_preference";
     public static final String API_CHOICE_TOKEN = "api_server_choice";
     public static final String MAP_QUEST_API_KEY_TOKEN = "api_preference";
+
+    private static SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,16 +174,24 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private void initLogFileChooser() {
-
             Preference logToFileCheckbox = findPreference(KEY_DEBUG_TO_FILE);
             logToFileCheckbox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(final Preference preference, Object value) {
                     boolean logToFile = (Boolean) value;
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-                    preferences.edit().putBoolean(KEY_DEBUG_TO_FILE, logToFile).apply();
-                    LogToFile.logToFileEnabled = logToFile;
-                    return true;
+                    if (!logToFile) {
+                        return true;
+                    }
+                    int check = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (check == PackageManager.PERMISSION_GRANTED) {
+                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+                        preferences.edit().putBoolean(KEY_DEBUG_TO_FILE, logToFile).apply();
+                        LogToFile.logToFileEnabled = logToFile;
+                        return true;
+                    } else {
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1024);
+                        return false;
+                    }
                 }
             });
 
@@ -267,7 +282,8 @@ public class SettingsActivity extends AppCompatActivity {
                         cursor.getColumnIndexOrThrow(ReverseGeocodingCacheContract.LocationAddressCache.COLUMN_NAME_ADDRESS));
                 Address address = ReverseGeocodingCacheDbHelper.getAddressFromBytes(cachedAddressBytes);
 
-                String recordCreatedTxt = cursor.getString(cursor.getColumnIndexOrThrow(ReverseGeocodingCacheContract.LocationAddressCache.COLUMN_NAME_CREATED));
+                long recordCreatedinMilis = cursor.getLong(cursor.getColumnIndexOrThrow(ReverseGeocodingCacheContract.LocationAddressCache.COLUMN_NAME_CREATED));
+                String recordCreatedTxt = iso8601Format.format(new Date(recordCreatedinMilis));
 
                 int itemId = cursor.getInt(cursor.getColumnIndexOrThrow(ReverseGeocodingCacheContract.LocationAddressCache._ID));
 
@@ -275,10 +291,12 @@ public class SettingsActivity extends AppCompatActivity {
                 lastRowsFromDB.append(" : ");
                 lastRowsFromDB.append(recordCreatedTxt);
                 lastRowsFromDB.append(" : ");
-                lastRowsFromDB.append(address.getLocality());
-                if (!address.getLocality().equals(address.getSubLocality())) {
-                    lastRowsFromDB.append(" - ");
-                    lastRowsFromDB.append(address.getSubLocality());
+                if (address.getLocality() != null) {
+                    lastRowsFromDB.append(address.getLocality());
+                    if (!address.getLocality().equals(address.getSubLocality())) {
+                        lastRowsFromDB.append(" - ");
+                        lastRowsFromDB.append(address.getSubLocality());
+                    }
                 }
 
                 rowsCounter++;

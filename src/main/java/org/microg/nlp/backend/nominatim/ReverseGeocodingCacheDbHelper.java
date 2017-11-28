@@ -30,7 +30,14 @@ public class ReverseGeocodingCacheDbHelper extends SQLiteOpenHelper {
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
     }
-    
+
+    public void deleteRecordFromTable(Integer recordId) {
+        SQLiteDatabase db = getWritableDatabase();
+        String selection = ReverseGeocodingCacheContract.LocationAddressCache._ID + " = ?";
+        String[] selectionArgs = { recordId.toString() };
+        db.delete(ReverseGeocodingCacheContract.LocationAddressCache.TABLE_NAME, selection, selectionArgs);
+    }
+
     public static Address getAddressFromBytes(byte[] addressBytes) {
         final Parcel parcel = Parcel.obtain();
         parcel.unmarshall(addressBytes, 0, addressBytes.length);

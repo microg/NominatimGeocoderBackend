@@ -22,10 +22,29 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
-import android.net.Uri;
 import android.os.Build;
+import android.os.Parcel;
+import android.os.PowerManager;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,26 +52,7 @@ import org.json.JSONObject;
 import org.microg.address.Formatter;
 import org.microg.nlp.api.GeocoderBackendService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static android.os.Build.VERSION.RELEASE;
-import android.os.Parcel;
-import android.os.PowerManager;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import static org.microg.nlp.backend.nominatim.BuildConfig.VERSION_NAME;
 import static org.microg.nlp.backend.nominatim.ReverseGeocodingCacheContract.LocationAddressCache;
 import static org.microg.nlp.backend.nominatim.LogToFile.appendLog;
@@ -69,8 +69,6 @@ public class BackendService extends GeocoderBackendService {
             "%s/search?%sformat=json&accept-language=%s&addressdetails=1&bounded=1&q=%s&limit=%d";
     private static final String SEARCH_GEOCODE_WITH_BOX_URL =
             SEARCH_GEOCODE_URL + "&viewbox=%f,%f,%f,%f";
-
-    SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private static final String WIRE_LATITUDE = "lat";
     private static final String WIRE_LONGITUDE = "lon";
@@ -114,7 +112,7 @@ public class BackendService extends GeocoderBackendService {
             formatter = new Formatter();
         } catch (IOException e) {
             Log.w(TAG, "Could not initialize address formatter", e);
-            appendLog(TAG, e.getMessage(), e);
+            appendLog(getBaseContext(), TAG, e.getMessage(), e);
         }
         readPrefs();
         powerManager = ((PowerManager) this.getSystemService(Context.POWER_SERVICE));
@@ -147,7 +145,7 @@ public class BackendService extends GeocoderBackendService {
                                             int maxResults,
                                             String locale) {
 
-        appendLog(TAG, "getFromLocation:" + latitude + ", " + longitude + ", " + locale);
+        appendLog(getBaseContext(), TAG, "getFromLocation:" + latitude + ", " + longitude + ", " + locale);
         if (mDbHelper == null) {
             mDbHelper = new ReverseGeocodingCacheDbHelper(getApplicationContext());
         }
@@ -161,19 +159,11 @@ public class BackendService extends GeocoderBackendService {
 
         String url = String.format(Locale.US, REVERSE_GEOCODE_URL, mApiUrl, mAPIKey,
                 locale.split("_")[0], latitude, longitude);
-        appendLog(TAG, "Constructed URL " + url);
+        appendLog(getBaseContext(), TAG, "Constructed URL " + url);
         try {
             JSONObject result = new JSONObject(new AsyncGetRequest(this,
                     url).asyncStart().retrieveString());
-            appendLog(TAG, "result from nominatim server:" + result);
-
-            if (wakeLock != null) {
-                try {
-                    wakeLock.release();
-                } catch (Throwable th) {
-                    // ignoring this exception, probably wakeLock was already released
-                }
-            }
+            appendLog(getBaseContext(), TAG, "result from nominatim server:" + result);
 
             Address address = parseResponse(localeFromLocaleString(locale), result);
             if (address != null) {
@@ -184,17 +174,33 @@ public class BackendService extends GeocoderBackendService {
             }
         } catch (Exception e) {
             Log.w(TAG, e);
-            appendLog(TAG, e.getMessage(), e);
+            appendLog(getBaseContext(), TAG, e.getMessage(), e);
+        } finally {
+            if (wakeLock != null) {
+                try {
+                    wakeLock.release();
+                } catch (Throwable th) {
+                    // ignoring this exception, probably wakeLock was already released
+                }
+            }
         }
         return null;
     }
 
     private void wakeUp() {
-        appendLog(TAG, "powerManager:" + powerManager);
+        appendLog(getBaseContext(), TAG, "powerManager:" + powerManager);
 
         String wakeUpStrategy = PreferenceManager.getDefaultSharedPreferences(this).getString(SettingsActivity.KEY_WAKE_UP_STRATEGY, "nowakeup");
 
-        appendLog(TAG, "wakeLock:wakeUpStrategy:" + wakeUpStrategy);
+        appendLog(getBaseContext(), TAG, "wakeLock:wakeUpStrategy:" + wakeUpStrategy);
+
+        if (wakeLock != null) {
+            try {
+                wakeLock.release();
+            } catch (Throwable th) {
+                // ignoring this exception, probably wakeLock was already released
+            }
+        }
 
         if ("nowakeup".equals(wakeUpStrategy)) {
             return;
@@ -208,7 +214,7 @@ public class BackendService extends GeocoderBackendService {
             powerLockID = PowerManager.PARTIAL_WAKE_LOCK;
         }
 
-        appendLog(TAG, "wakeLock:powerLockID:" + powerLockID);
+        appendLog(getBaseContext(), TAG, "wakeLock:powerLockID:" + powerLockID);
 
         boolean isInUse;
 
@@ -220,11 +226,11 @@ public class BackendService extends GeocoderBackendService {
 
         if (!isInUse) {
             wakeLock = powerManager.newWakeLock(powerLockID, TAG);
-            appendLog(TAG, "wakeLock:" + wakeLock + ":" + wakeLock.isHeld());
+            appendLog(getBaseContext(), TAG, "wakeLock:" + wakeLock + ":" + wakeLock.isHeld());
             if (!wakeLock.isHeld()) {
                 wakeLock.acquire();
             }
-            appendLog(TAG, "wakeLock acquired");
+            appendLog(getBaseContext(), TAG, "wakeLock acquired");
         }
     }
 
@@ -268,7 +274,7 @@ public class BackendService extends GeocoderBackendService {
             if (!addresses.isEmpty()) return addresses;
         } catch (Exception e) {
             Log.w(TAG, e);
-            appendLog(TAG, e.getMessage(), e);
+            appendLog(getBaseContext(), TAG, e.getMessage(), e);
         }
         return null;
     }
@@ -345,23 +351,25 @@ public class BackendService extends GeocoderBackendService {
 
         @Override
         public void run() {
-            appendLog(TAG, "Sync key (done)" + done);
+            appendLog(getBaseContext(), TAG, "Sync key (done)" + done);
             synchronized (done) {
                 try {
                     Log.d(TAG, "Requesting " + url);
-                    appendLog(TAG, "Requesting " + url);
+                    appendLog(getBaseContext(), TAG, "Requesting " + url);
                     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-                    appendLog(TAG, "Connection opened");
+                    appendLog(getBaseContext(), TAG, "Connection opened");
                     connection.setRequestProperty(USER_AGENT, String.format(USER_AGENT_TEMPLATE, VERSION_NAME, RELEASE));
+                    connection.setConnectTimeout(30000);
+                    connection.setReadTimeout(30000);
                     connection.setDoInput(true);
-                    appendLog(TAG, "Getting input stream");
+                    appendLog(getBaseContext(), TAG, "Getting input stream");
                     InputStream inputStream = connection.getInputStream();
-                    appendLog(TAG, "Reading input stream");
+                    appendLog(getBaseContext(), TAG, "Reading input stream");
                     result = readStreamToEnd(inputStream);
-                    appendLog(TAG, "Input stream read");
+                    appendLog(getBaseContext(), TAG, "Input stream read");
                 } catch (Exception e) {
                     Log.w(TAG, e);
-                    appendLog(TAG, e.getMessage(), e);
+                    appendLog(getBaseContext(), TAG, e.getMessage(), e);
                 }
                 done.set(true);
                 done.notifyAll();
@@ -417,7 +425,7 @@ public class BackendService extends GeocoderBackendService {
         }
 
         Address addressFromCache = getResultFromCache(latitude, longitude, locale);
-        appendLog(TAG, "address retrieved from cache:" + addressFromCache);
+        appendLog(getBaseContext(), TAG, "address retrieved from cache:" + addressFromCache);
         if (addressFromCache == null) {
             return null;
         }
@@ -443,11 +451,11 @@ public class BackendService extends GeocoderBackendService {
         values.put(LocationAddressCache.COLUMN_NAME_LONGITUDE, longitude);
         values.put(LocationAddressCache.COLUMN_NAME_LATITUDE, latitude);
         values.put(LocationAddressCache.COLUMN_NAME_LOCALE, locale);
-        values.put(LocationAddressCache.COLUMN_NAME_CREATED, iso8601Format.format(new Date()));
+        values.put(LocationAddressCache.COLUMN_NAME_CREATED, new Date().getTime());
 
         long newLocationRowId = db.insert(LocationAddressCache.TABLE_NAME, null, values);
 
-        appendLog(TAG, "storedAddress:" + latitude + ", " + longitude + ", " + newLocationRowId + ", " + address);
+        appendLog(getBaseContext(), TAG, "storedAddress:" + latitude + ", " + longitude + ", " + newLocationRowId + ", " + address);
     }
 
     private Address getResultFromCache(double latitude, double longitude, String locale) {
@@ -498,30 +506,16 @@ public class BackendService extends GeocoderBackendService {
         return ReverseGeocodingCacheDbHelper.getAddressFromBytes(cachedAddressBytes);
     }
 
-    private boolean recordDateIsNotValidOrIsTooOld(String recordCreatedTxt) {
+    private boolean recordDateIsNotValidOrIsTooOld(long recordCreatedinMilis) {
         Calendar now = Calendar.getInstance();
         Calendar calendarRecordCreated = Calendar.getInstance();
-        try {
-            Date recordCreated = iso8601Format.parse(recordCreatedTxt);
-            calendarRecordCreated.setTime(recordCreated);
-        } catch (ParseException ex) {
-            Log.e(TAG, "Date of date created could not be parsed. Orignal value is " + recordCreatedTxt, ex);
-            appendLog(TAG, ex.getMessage(), ex);
-            return true;
-        }
+        calendarRecordCreated.setTimeInMillis(recordCreatedinMilis);
 
         int timeToLiveRecordsInCacheInHours = Integer.parseInt(
                         PreferenceManager.getDefaultSharedPreferences(this).getString(SettingsActivity.LOCATION_CACHE_LASTING_HOURS, "720"));
 
         calendarRecordCreated.add(Calendar.HOUR_OF_DAY, timeToLiveRecordsInCacheInHours);
         return calendarRecordCreated.before(now);
-    }
-
-    private void deleteRecordFromTable(Integer recordId) {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        String selection = LocationAddressCache._ID + " = ?";
-        String[] selectionArgs = { recordId.toString() };
-        db.delete(LocationAddressCache.TABLE_NAME, selection, selectionArgs);
     }
 
     private byte[] getAddressAsBytes(Address address) {
@@ -557,11 +551,11 @@ public class BackendService extends GeocoderBackendService {
                 Integer recordId = cursor.getInt(
                                  cursor.getColumnIndexOrThrow(LocationAddressCache._ID));
 
-                String recordCreatedTxt = cursor.getString(
+                long recordCreatedInMilis = cursor.getLong(
                                             cursor.getColumnIndexOrThrow(LocationAddressCache.COLUMN_NAME_CREATED));
 
-                if (recordDateIsNotValidOrIsTooOld(recordCreatedTxt)) {
-                    deleteRecordFromTable(recordId);
+                if (recordDateIsNotValidOrIsTooOld(recordCreatedInMilis)) {
+                    mDbHelper.deleteRecordFromTable(recordId);
                 }
             }
             cursor.close();
