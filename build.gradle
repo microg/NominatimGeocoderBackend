@@ -70,6 +70,21 @@ android {
         minSdkVersion 9
         targetSdkVersion 25
     }
+
+    buildTypes {
+        debug {
+            minifyEnabled true
+            zipAlignEnabled true
+            useProguard false
+        }
+        release {
+            shrinkResources true
+            minifyEnabled true
+            zipAlignEnabled true
+            useProguard true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 if (file('user.gradle').exists()) {
