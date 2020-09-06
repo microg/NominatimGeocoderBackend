@@ -16,10 +16,11 @@
 
 buildscript {
     repositories {
+        google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.android.tools.build:gradle:4.0.0'
     }
 }
 
@@ -51,24 +52,27 @@ int getMyVersionCode() {
 }
 
 repositories {
+    google()
     jcenter()
 }
 
 dependencies {
-    compile 'org.microg:unifiednlp-api:1.5.6'
-    compile 'org.microg:address-formatter:0.2.1'
-    compile 'com.takisoft.fix:preference-v7:25.3.1.0'
+    implementation 'org.microg:unifiednlp-api:1.5.6'
+    implementation 'org.microg:address-formatter:0.2.1'
+    //noinspection GradleCompatible,GradleCompatible
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'com.takisoft.fix:preference-v7:25.3.1.0'
 }
 
-android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
         versionName getMyVersionName()
         versionCode(20000 + getMyVersionCode())
-        minSdkVersion 9
-        targetSdkVersion 25
+        minSdkVersion 14
+        targetSdkVersion 29
     }
 }
 
